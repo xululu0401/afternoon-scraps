@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一下午都是边角料</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f2ec; color: #2a2724; line-height: 1.6; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 26px; letter-spacing: 1px; }
+  .lead { color: #6a625a; font-size: 14px; margin: 4px 0 14px; }
+  .card { background: #fff; border-radius: 10px; padding: 14px; border: 1px solid #e4ddd2; min-width: 0; margin-bottom: 14px; }
+  .card h2 { font-size: 15px; color: #6a625a; font-weight: 600; margin-bottom: 8px; }
+  .sentence { font-size: 16px; line-height: 2.4; }
+  .sentence input { width: 5.2em; font: inherit; font-size: 16px; padding: 2px 6px; border: none; border-bottom: 2px solid #b8742c; background: #fdf8f1; text-align: center; border-radius: 4px 4px 0 0; }
+  .sentence input#unit { width: 3.6em; }
+  input.bad { border-bottom-color: #b3402e !important; background: #fff0eb !important; }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  button { font: inherit; font-size: 13px; padding: 6px 11px; border-radius: 6px; border: 1px solid #8a4f1c; background: #8a4f1c; color: #fff; cursor: pointer; }
+  button.ghost { background: #fff; color: #8a4f1c; }
+  #error { display: none; background: #fff0eb; border: 1px solid #e3b4a6; color: #8f2f1d; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; overflow-wrap: anywhere; }
+  #summary { font-size: 22px; font-weight: 700; color: #8a4f1c; overflow-wrap: anywhere; }
+  #facts { margin: 8px 0 0 18px; font-size: 14px; color: #4a443e; } #facts li { margin: 3px 0; overflow-wrap: anywhere; }
+  .strip { display: flex; height: 26px; border-radius: 4px; overflow: hidden; background: #ece6dc; margin: 5px 0; }
+  .strip div { height: 100%; min-width: 0; border-right: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #4a443e; overflow: hidden; white-space: nowrap; }
+  .strip div.ok { background: #e2a55a; color: #3b2508; font-weight: 700; }
+  .strip div.no { background: #e9dfd0; }
+  .strip div.cut { background: #b9b2a8; flex: none; }
+  .striprow { display: grid; grid-template-columns: 3.6em minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; color: #7a7168; }
+  .striprow .tail { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+  .legend { font-size: 12px; color: #7a7168; display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 5px 6px; border-top: 1px solid #efe9e0; text-align: left; }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+  td.bar { width: 50%; } td.bar span { display: block; height: 10px; border-radius: 2px; background: #e9dfd0; } td.bar span.ok { background: #e2a55a; }
+  thead th { color: #7a7168; font-weight: 600; border-top: none; font-size: 12px; }
+  .sugs { list-style: none; }
+  .sugs li { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; padding: 8px 0; border-top: 1px solid #efe9e0; font-size: 14px; }
+  .sugs li:first-child { border-top: none; } .sugs li span { overflow-wrap: anywhere; min-width: 0; }
+  .sugs li button { flex: none; }
+  .dl { display: flex; gap: 6px; flex-wrap: wrap; }
+  .rules { font-size: 13px; color: #4a443e; } .rules p { margin: 4px 0; }
+  .note { font-size: 12px; color: #8a8178; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>一下午都是边角料</h1>
+  <p class="lead">一下午三个小时，被消息、电话、同事各打断几次，加起来也没耽误多久，可就是凑不出一整段能写东西的时间。填一句话：多长、被打断几次、每次耽误多久、想要多长一整段，它算出这样的下午里，切出来的最长一段平均多长、有多大机会凑出你要的那一段，以及少打断一次、回神快一点、拉长时间分别能换回多少。</p>
+
+  <div class="card">
+    <div class="sentence">
+      我有 <input id="L" inputmode="decimal"> <input id="unit" maxlength="6">，
+      中间会被打断 <input id="k" inputmode="numeric"> 次，
+      每次连回神要 <input id="r" inputmode="decimal"> <span class="u"></span>；
+      我想要一整段不被打断的 <input id="x" inputmode="decimal"> <span class="u"></span>，
+      要有 <input id="conf" inputmode="numeric"> % 的把握。
+    </div>
+    <div class="presets" id="presets"></div>
+  </div>
+
+  <div id="error"></div>
+
+  <div id="out" style="display:none;">
+    <div class="card">
+      <div id="summary"></div>
+      <ul id="facts"></ul>
+    </div>
+    <div class="card">
+      <h2>随手模拟的 8 个这样的下午</h2>
+      <div id="strips"></div>
+      <div class="legend"><span><i style="background:#e2a55a"></i>够长的一段</span><span><i style="background:#e9dfd0"></i>不够长</span><span><i style="background:#b9b2a8"></i>打断和回神</span></div>
+      <p class="note">每次打断的位置随机抽，是示意，不是你真实的下午；右边是那天最长的一段。<button class="ghost" id="reroll" style="padding:2px 8px;font-size:12px;">换一批</button></p>
+    </div>
+    <div class="card">
+      <h2>从短到长，每一段平均多长</h2>
+      <table id="sorted"><thead><tr><th>第几短</th><th>平均</th><th></th></tr></thead><tbody></tbody></table>
+      <p class="note">这是很多个这样的下午平均下来的结果：先把每天的段从短到长排好，再把同一位置的段取平均。</p>
+    </div>
+    <div class="card" id="sugCard">
+      <h2>换个条件试试</h2>
+      <ul class="sugs" id="sugs"></ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>导出与保存</h2>
+    <div class="dl">
+      <button id="dlPNG">结果卡 PNG</button>
+      <button class="ghost" id="dlCSV">CSV</button>
+      <button class="ghost" id="dlMD">Markdown</button>
+      <button class="ghost" id="dlJSON">JSON 备份</button>
+      <button class="ghost" id="reset">恢复默认例子</button>
+    </div>
+    <p class="note">填的内容自动保存在这台设备的浏览器里，刷新后还在；不上传、不联网。</p>
+  </div>
+
+  <div class="card rules">
+    <h2>怎么算的、算不了什么</h2>
+    <p><b>假设</b>：每次打断落在哪一刻互相独立、哪一刻都一样可能；每次打断连回神吃掉固定的一段时间。把吃掉的时间拿走，剩下能用的时间被打断点随机切成「打断次数 + 1」段。</p>
+    <p><b>公式</b>：剩下 L′、切成 n 段时，从短到长第 i 段平均长 L′/n ×（1/(n−i+1) + … + 1/n），最短一段平均只有 L′/n²；最长一段 ≥ x 的概率 = 1 − Σ(−1)ʲ·C(n,j)·(1 − j·x/L′)ⁿ⁻¹（括号小于 0 的项去掉）。「有把握拿到的最长一段」是让这个概率刚好等于你填的把握的那个长度，向下取到 0.1。</p>
+    <p>真实的打断常常扎堆（开会前后、午饭后），也可能你自己会挑时间回消息，这时结果会和随机模型不一样。它只说明「打断次数和回神时间」这两件事本身有多大影响，不预测你明天的日程。默认例子的数字是虚构的。单位可以换成别的（厘米、页），算法不变。</p>
+  </div>
+</div>
+
+  <script>
+/* 一下午都是边角料 · 计算核心（无 DOM，可在 node 里 require）
+ * 模型：一段总长 L，被打断 k 次，每次打断连同回神一共吃掉 r。
+ * 假设 k 次打断落在这段里的位置彼此独立、处处等可能（互不重叠）。
+ * 这等价于：把剩下能用的 L' = L − k·r 在 k 个均匀随机点切开，得到 n = k+1 段（均匀间隔）。
+ * 关键结论（均匀间隔的经典结果）：
+ *   从短到长第 i 段的平均长度 E[S(i)] = (L'/n) · Σ_{j=n−i+1..n} 1/j
+ *   某一段 ≥ x 的概率：P(最长 ≥ x) = 1 − Σ_{j=0..n} (−1)^j C(n,j) (1 − j·x/L')₊^{n−1}
+ *   够长（≥ x）的段平均有几段：n (1 − a)^{n−1}，a = x/L'
+ *   落在够长段里的时间平均：L' (1 − a)^{n−1} (1 + (n−1) a)
+ */
+(function (root) {
+  'use strict';
+  const LIM = { L: [1, 100000], k: [0, 30], r: [0, 100000], x: [0, 100000], conf: [50, 99] };
+
+  function bad(field, message) { const e = new Error(message); e.field = field; throw e; }
+  function num(v, field, label) {
+    const s = String(v == null ? '' : v).trim().replace(/，/g, '.').replace(/,/g, '.');
+    if (s === '') bad(field, label + '没填');
+    if (!/^-?\d+(\.\d+)?$/.test(s)) bad(field, label + '要填数字（现在是「' + s.slice(0, 12) + '」）');
+    return Number(s);
+  }
+
+  function parse(inp) {
+    const o = inp || {};
+    const unit = String(o.unit == null ? '' : o.unit).trim().slice(0, 6) || '分钟';
+    const L = num(o.L, 'L', '整段时长');
+    const k = num(o.k, 'k', '打断次数');
+    const r = num(o.r, 'r', '每次打断吃掉的时间');
+    const x = num(o.x, 'x', '想要的一整段');
+    const conf = o.conf == null || String(o.conf).trim() === '' ? 80 : num(o.conf, 'conf', '把握');
+    if (L < LIM.L[0] || L > LIM.L[1]) bad('L', '整段时长要在 1–100000 之间');
+    if (!Number.isInteger(k)) bad('k', '打断次数要是整数');
+    if (k < 0 || k > 30) bad('k', '打断次数要在 0–30 之间');
+    if (r < 0) bad('r', '每次打断吃掉的时间不能是负数');
+    if (x <= 0) bad('x', '想要的一整段要大于 0');
+    if (conf < 50 || conf > 99) bad('conf', '把握要在 50%–99% 之间');
+    const Lp = L - k * r;
+    if (Lp <= 0) bad('r', k + ' 次 × ' + fmt(r) + ' = ' + fmt(k * r) + unit + '，已经吃掉了整段 ' + fmt(L) + unit + '，没剩能用的时间');
+    return { unit, L, k, r, x, conf, Lp, n: k + 1 };
+  }
+
+  function choose(n, j) { let c = 1; for (let i = 1; i <= j; i++) c = c * (n - j + i) / i; return c; }
+  function harm(a, b) { let s = 0; for (let j = a; j <= b; j++) s += 1 / j; return s; }
+
+  /* P(最长一段 ≥ x)，n 段、可用 Lp */
+  function pAtLeast(n, Lp, x) {
+    if (x <= 0) return 1;
+    if (x > Lp) return 0;
+    if (n === 1) return 1;
+    if (x <= Lp / n) return 1; /* 最长一段至少是平均值 */
+    const a = x / Lp;
+    let F = 0;
+    for (let j = 0; j <= n; j++) {
+      const b = 1 - j * a;
+      if (b <= 0) break;
+      F += (j % 2 ? -1 : 1) * choose(n, j) * Math.pow(b, n - 1);
+    }
+    return Math.min(1, Math.max(0, 1 - F));
+  }
+  function expectedSorted(n, Lp) { /* 从短到长 */
+    const out = [];
+    for (let i = 1; i <= n; i++) out.push(Lp / n * harm(n - i + 1, n));
+    return out;
+  }
+  function countAtLeast(n, Lp, x) { if (x > Lp) return 0; if (n === 1) return 1; return n * Math.pow(1 - x / Lp, n - 1); }
+  function timeAtLeast(n, Lp, x) { if (x > Lp) return 0; if (n === 1) return Lp; const a = x / Lp; return Lp * Math.pow(1 - a, n - 1) * (1 + (n - 1) * a); }
+
+  /* 有 conf 把握能拿到的最长一段：P(最长 ≥ y) = conf 的 y（P 关于 y 单调不增） */
+  function guaranteed(n, Lp, conf) {
+    if (n === 1) return Lp;
+    const c = conf / 100;
+    let lo = Lp / n, hi = Lp; /* P(lo)=1 ≥ c，P(hi)→ 极小 */
+    for (let it = 0; it < 200; it++) { const m = (lo + hi) / 2; if (pAtLeast(n, Lp, m) >= c) lo = m; else hi = m; }
+    return lo;
+  }
+  /* 在 L、r、x 不变时，最多被打断几次仍有 conf 把握（k 越大越难；返回 -1 表示一次不打断也不够） */
+  function maxInterrupts(L, r, x, conf) {
+    let best = -1;
+    for (let k = 0; k <= 30; k++) {
+      const Lp = L - k * r; if (Lp <= 0) break;
+      if (pAtLeast(k + 1, Lp, x) >= conf / 100 - 1e-12) best = k; else break;
+    }
+    return best;
+  }
+  /* k、r、x 不变时，整段至少要多长才有 conf 把握（向上取到 0.1） */
+  function minLength(k, r, x, conf) {
+    const n = k + 1, c = conf / 100;
+    const P = (L) => { const Lp = L - k * r; return Lp <= 0 ? 0 : pAtLeast(n, Lp, x); };
+    let lo = k * r + x, hi = Math.max(lo * 2, 1);
+    while (P(hi) < c && hi < 1e9) hi *= 2;
+    if (P(lo) >= c) return Math.ceil(lo * 10 - 1e-9) / 10;
+    for (let it = 0; it < 200; it++) { const m = (lo + hi) / 2; if (P(m) >= c) hi = m; else lo = m; }
+    let v = Math.ceil(hi * 10 - 1e-9) / 10;
+    while (P(v) < c) v = Math.round(v * 10 + 1) / 10;
+    return v;
+  }
+
+  function fmt(v, d) {
+    if (!isFinite(v)) return String(v);
+    const p = d == null ? 1 : d;
+    const q = Number(v.toPrecision(12)); /* 先去掉浮点尾差（61.249999… 按 61.25 进位） */
+    let s = (Math.sign(q) * Math.round(Math.abs(q) * Math.pow(10, p)) / Math.pow(10, p)).toFixed(p);
+    if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
+    if (s === '-0') s = '0';
+    return s;
+  }
+  function pct(p) {
+    if (p >= 1) return '100%';
+    if (p <= 0) return '0%';
+    const v = p * 100;
+    if (v > 99.9) return '>99.9%';
+    if (v < 0.1) return '<0.1%';
+    return fmt(v, 1) + '%';
+  }
+  function dur(v, unit) {
+    if (unit === '分钟' && v >= 60) { const h = Math.floor(v / 60 + 1e-9), m = v - h * 60; return h + ' 小时' + (Math.abs(m) >= 0.05 ? ' ' + fmt(m) + ' 分钟' : '') + '（' + fmt(v) + ' 分钟）'; }
+    return fmt(v) + ' ' + unit;
+  }
+
+  function calculate(inp) {
+    const p = parse(inp);
+    const { n, Lp, x, k, r, L, conf } = p; const unit = ' ' + p.unit; const T = /分|时|秒|天|周|月/.test(p.unit) ? '时间' : '长度';
+    const sorted = expectedSorted(n, Lp);
+    const P = pAtLeast(n, Lp, x);
+    const cnt = countAtLeast(n, Lp, x);
+    const tAt = timeAtLeast(n, Lp, x);
+    const g = guaranteed(n, Lp, conf);
+    const res = Object.assign({}, p, {
+      sorted, longest: sorted[n - 1], shortest: sorted[0], mean: Lp / n,
+      P, count: cnt, timeLong: tAt, guaranteed: g, guaranteedShow: Math.floor(g * 10 + 1e-9) / 10,
+      maxK: maxInterrupts(L, r, x, conf), minL: minLength(k, r, x, conf)
+    });
+    res.summary = k === 0
+      ? (x <= Lp ? '不被打断，整段 ' + fmt(Lp) + unit + '都是你的' : '不被打断也只有 ' + fmt(Lp) + unit + '，不够 ' + fmt(x) + unit)
+      : '能有一段 ≥ ' + fmt(x) + unit + '的机会：' + pct(P);
+    const f = [];
+    if (k > 0) {
+      f.push('被打断 ' + k + ' 次，切成 ' + n + ' 段；' + (r > 0 ? '每次 ' + fmt(r) + unit + '、一共 ' + fmt(k * r) + unit + '花在打断和回神上，' : '') + '剩下能用的 ' + fmt(Lp) + unit + '。');
+      f.push('平均来看，最长一段 ' + fmt(res.longest) + unit + '，最短一段 ' + fmt(res.shortest) + unit + '（平均每段 ' + fmt(res.mean) + unit + '）。');
+      f.push('够 ' + fmt(x) + unit + '的段平均有 ' + cnt.toFixed(2) + ' 段；落在这些段里的' + T + '平均 ' + fmt(tAt) + unit + '，占能用' + T + '的 ' + pct(tAt / Lp) + '。');
+      f.push('有 ' + conf + '% 把握能拿到的最长一段是 ' + fmt(res.guaranteedShow) + unit + '。');
+    } else {
+      f.push(r > 0 ? '没有打断，r 不起作用。' : '没有打断。');
+    }
+    res.facts = f;
+    return res;
+  }
+
+  /* 建议：每条都能作用于输入 */
+  function suggestions(res) {
+    const out = [];
+    const { k, r, x, L, conf } = res; const unit = ' ' + res.unit;
+    if (k > 0) {
+      const r1 = calculate({ unit: res.unit, L, k: k - 1, r, x, conf });
+      if (r1.P > res.P + 1e-9 && pct(r1.P) !== pct(res.P)) out.push({ kind: 'k', text: '少被打断一次（' + k + ' → ' + (k - 1) + '）：机会从 ' + pct(res.P) + ' 变成 ' + pct(r1.P) + '。', apply: { k: k - 1 } });
+    }
+    if (k > 0 && r > 0) {
+      const rh = Math.round(r / 2 * 10) / 10;
+      const r2 = calculate({ unit: res.unit, L, k, r: rh, x, conf });
+      if (r2.P > res.P + 1e-9 && pct(r2.P) !== pct(res.P)) out.push({ kind: 'r', text: '每次回神快一半（' + fmt(r) + ' → ' + fmt(rh) + unit + '）：机会变成 ' + pct(r2.P) + '。', apply: { r: rh } });
+    }
+    if (res.P < conf / 100 && k > 0) {
+      if (res.maxK >= 0) out.push({ kind: 'maxK', text: '想有 ' + conf + '% 把握拿到 ' + fmt(x) + unit + '，最多只能被打断 ' + res.maxK + ' 次。', apply: { k: res.maxK } });
+      else out.push({ kind: 'maxK', text: '就算一次都不打断，' + fmt(L) + unit + '也凑不出 ' + fmt(x) + unit + '。' });
+      out.push({ kind: 'L', text: '打断次数不变，整段要拉长到 ' + fmt(res.minL) + unit + '才有 ' + conf + '% 把握。', apply: { L: res.minL } });
+      const gx = res.guaranteedShow;
+      if (gx > 0) out.push({ kind: 'x', text: '或者把想要的一整段降到 ' + fmt(gx) + unit + '，就有 ' + conf + '% 把握。', apply: { x: gx } });
+    }
+    if (k > 0 && r > 0 && L - k * r >= x) out.push({ kind: 'batch', text: '如果能把这 ' + k + ' 次都攒到最后统一处理，前面就是一整块 ' + fmt(L - k * r) + unit + '（这一条不在随机模型里，是另一种安排）。' });
+    return out;
+  }
+
+  /* 模拟若干个下午（只用于画示意，确定性种子） */
+  function rng(seed) { let s = (seed >>> 0) || 1; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; }
+  function simulate(res, seed, count) {
+    const R = rng(seed), out = [];
+    for (let t = 0; t < count; t++) {
+      const cuts = []; for (let i = 0; i < res.k; i++) cuts.push(R() * res.Lp);
+      cuts.sort((a, b) => a - b);
+      const pieces = []; let prev = 0;
+      cuts.forEach((c) => { pieces.push(c - prev); prev = c; }); pieces.push(res.Lp - prev);
+      out.push(pieces);
+    }
+    return out;
+  }
+
+  function rows(res) {
+    return res.sorted.map((v, i) => ['第 ' + (i + 1) + ' 短', fmt(v), v >= res.x ? '够' : '不够']);
+  }
+  function csvCell(s) { s = String(s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  function toCSV(res, when) {
+    const L = [];
+    L.push(['项目', '数值', '单位'].join(','));
+    const u = res.unit;
+    [['整段时长', res.L, u], ['打断次数', res.k, '次'], ['每次吃掉', res.r, u], ['想要的一整段', res.x, u], ['把握', res.conf, '%'], ['能用的时间', res.Lp, u], ['段数', res.n, '段'],
+      ['有一段够长的机会', fmt(res.P * 100, 2), '%'], ['最长一段平均', fmt(res.longest, 2), u], ['最短一段平均', fmt(res.shortest, 2), u], ['够长的段平均几段', fmt(res.count, 3), '段'],
+      ['够长段里的时间平均', fmt(res.timeLong, 2), u], ['有把握拿到的最长一段', fmt(res.guaranteedShow, 1), u]].forEach((r) => L.push([csvCell(r[0]), r[1], csvCell(r[2])].join(',')));
+    L.push('');
+    L.push(['从短到长', '平均长度(' + res.unit + ')', '够不够 ' + fmt(res.x)].map(csvCell).join(','));
+    res.sorted.forEach((v, i) => L.push(['第 ' + (i + 1) + ' 短', fmt(v, 2), v >= res.x ? '够' : '不够'].map(csvCell).join(',')));
+    L.push('');
+    L.push(csvCell('假设：打断位置互相独立、处处等可能；导出于 ' + when));
+    return L.join('\n') + '\n';
+  }
+  function toMD(res, when) {
+    const L = ['# 一下午都是边角料', '', '> 导出于 ' + when + '。假设打断落在哪里互相独立、处处等可能；不是对你真实一天的统计。', '',
+      '**' + res.summary + '**', ''];
+    res.facts.forEach((f) => L.push('- ' + f));
+    L.push('', '| 输入 | 值 |', '|---|---|',
+      '| 整段时长 | ' + fmt(res.L) + ' ' + res.unit + ' |', '| 打断次数 | ' + res.k + ' |', '| 每次吃掉 | ' + fmt(res.r) + ' ' + res.unit + ' |',
+      '| 想要的一整段 | ' + fmt(res.x) + ' ' + res.unit + ' |', '| 把握 | ' + res.conf + '% |', '',
+      '| 从短到长 | 平均长度（' + res.unit + '） | 够不够 ' + fmt(res.x) + ' |', '|---|---:|---|');
+    rows(res).forEach((r) => L.push('| ' + r.join(' | ') + ' |'));
+    const s = suggestions(res);
+    if (s.length) { L.push('', '## 接下来可以', ''); s.forEach((x) => L.push('- ' + x.text)); }
+    return L.join('\n') + '\n';
+  }
+
+  const api = { parse, calculate, suggestions, simulate, pAtLeast, expectedSorted, countAtLeast, timeAtLeast, guaranteed, maxInterrupts, minLength, fmt, pct, dur, rows, toCSV, toMD, rng, LIM };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.AppCore = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+  </script>
+  <script>
+/* 一下午都是边角料 · 界面层 */
+(function () {
+  'use strict';
+  const C = window.AppCore;
+  const KEY = 'afternoon-scraps:v1';
+  const F = ['L', 'unit', 'k', 'r', 'x', 'conf'];
+  const DEFAULT = { L: 180, unit: '分钟', k: 5, r: 6, x: 60, conf: 80, seed: 7 };
+  const PRESETS = [
+    ['默认：三小时下午，打断 5 次', { L: 180, unit: '分钟', k: 5, r: 6, x: 60, conf: 80 }],
+    ['上午 4 小时想写 90 分钟', { L: 240, unit: '分钟', k: 8, r: 5, x: 90, conf: 80 }],
+    ['晚上 2 小时只被打断 1 次', { L: 120, unit: '分钟', k: 1, r: 10, x: 45, conf: 90 }],
+    ['1 米玻璃棒摔成 3 段', { L: 100, unit: '厘米', k: 2, r: 0, x: 50, conf: 80 }]
+  ];
+  const $ = (id) => document.getElementById(id);
+  let state = Object.assign({}, DEFAULT);
+  let last = null;
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function writeInputs() { F.forEach((k) => { $(k).value = state[k] == null ? '' : state[k]; }); units(); }
+  function readInputs() { F.forEach((k) => { state[k] = $(k).value; }); }
+  function units() { const u = $('unit').value.trim() || '分钟'; document.querySelectorAll('.u').forEach((e) => { e.textContent = u; }); }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* 隐私模式忽略 */ } }
+  function load() {
+    try {
+      const o = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (!o || typeof o !== 'object') return null;
+      const s = Object.assign({}, DEFAULT);
+      F.forEach((k) => { if (o[k] != null) s[k] = String(o[k]).slice(0, 20); });
+      if (Number.isInteger(o.seed)) s.seed = o.seed;
+      return s;
+    } catch (e) { return null; }
+  }
+
+  function strips(r) {
+    const days = C.simulate(r, state.seed || 7, 8);
+    return days.map((pieces, d) => {
+      let h = '';
+      const best = Math.max.apply(null, pieces);
+      pieces.forEach((p, i) => {
+        if (i > 0 && r.r > 0) h += '<div class="cut" style="width:' + (r.r / r.L * 100) + '%" title="打断 ' + C.fmt(r.r) + ' ' + esc(r.unit) + '"></div>';
+        const w = p / r.L * 100;
+        h += '<div class="' + (p >= r.x ? 'ok' : 'no') + '" style="flex:0 0 ' + w + '%" title="' + C.fmt(p) + ' ' + esc(r.unit) + '">' + (w > 9 ? C.fmt(p, 0) : '') + '</div>';
+      });
+      return '<div class="striprow"><span>第 ' + (d + 1) + ' 天</span><div class="strip">' + h + '</div><span class="tail">' + C.fmt(best, 0) + ' ' + esc(r.unit) + '</span></div>';
+    }).join('');
+  }
+
+  function render(r) {
+    $('summary').textContent = r.summary;
+    $('facts').innerHTML = r.facts.map((f) => '<li>' + esc(f) + '</li>').join('');
+    $('strips').innerHTML = strips(r);
+    const mx = r.longest || 1;
+    $('sorted').querySelector('tbody').innerHTML = r.sorted.map((v, i) =>
+      '<tr><td>' + (r.n === 1 ? '整段' : '第 ' + (i + 1) + ' 短') + '</td><td class="n">' + C.fmt(v) + ' ' + esc(r.unit) + '</td><td class="bar"><span class="' + (v >= r.x ? 'ok' : '') + '" style="width:' + Math.max(1, v / mx * 100) + '%"></span></td></tr>').join('');
+    const ul = $('sugs'); ul.innerHTML = '';
+    const sg = C.suggestions(r);
+    $('sugCard').style.display = sg.length ? '' : 'none';
+    sg.forEach((sc) => {
+      const li = document.createElement('li');
+      li.innerHTML = '<span></span>' + (sc.apply ? '<button class="ghost" data-kind="' + sc.kind + '">照这个改</button>' : '');
+      li.querySelector('span').textContent = sc.text;
+      if (sc.apply) li.querySelector('button').addEventListener('click', () => { Object.keys(sc.apply).forEach((k) => { state[k] = sc.apply[k]; }); writeInputs(); run(); });
+      ul.appendChild(li);
+    });
+  }
+
+  function run() {
+    document.querySelectorAll('input.bad').forEach((e) => e.classList.remove('bad'));
+    readInputs(); units();
+    try {
+      const r = C.calculate(state);
+      last = r;
+      $('error').style.display = 'none';
+      $('out').style.display = '';
+      render(r);
+    } catch (e) {
+      last = null;
+      if (e.field && $(e.field)) $(e.field).classList.add('bad');
+      $('error').textContent = '算不了：' + e.message; $('error').style.display = 'block';
+      $('out').style.display = 'none';
+    }
+    save();
+  }
+
+  /* ── 导出 ── */
+  function stamp() { const d = new Date(), z = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()); }
+  function download(name, blob) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
+  function wrap(g, t, w) {
+    const NOHEAD = '，。、；：！？）」』%';
+    const out = []; let line = '';
+    const toks = String(t).match(/[0-9][0-9,.%]*|[A-Za-z]+|[\s\S]/g) || [];
+    for (const ch of toks) {
+      if (g.measureText(line + ch).width > w && line) {
+        if (NOHEAD.indexOf(ch[0]) >= 0) { const l = line.slice(-1); out.push(line.slice(0, -1)); line = l + ch; } else { out.push(line); line = ch.replace(/^\s+/, ''); }
+      } else line += ch;
+    }
+    if (line) out.push(line); return out;
+  }
+  function drawPNG(r) {
+    const W = 1080, H = 1350;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const g = cv.getContext('2d'); const FF = '"PingFang SC","Microsoft YaHei",sans-serif';
+    g.fillStyle = '#f5f2ec'; g.fillRect(0, 0, W, H); g.fillStyle = '#fff'; g.fillRect(50, 50, 980, 1250);
+    g.fillStyle = '#6a625a'; g.font = '30px ' + FF; g.fillText('一下午都是边角料', 100, 118);
+    g.font = '22px ' + FF;
+    const u = r.unit;
+    const head = fmtHead(r);
+    let y = 158;
+    wrap(g, head, 880).slice(0, 2).forEach((l) => { g.fillText(l, 100, y); y += 30; });
+    g.fillStyle = '#8a4f1c'; g.font = 'bold 46px ' + FF; y += 50;
+    wrap(g, r.summary, 880).slice(0, 2).forEach((l) => { g.fillText(l, 100, y); y += 60; });
+    /* 条带 */
+    y += 4; g.font = '20px ' + FF; g.fillStyle = '#7a7168'; g.fillText('随手模拟的 8 个这样的下午（示意）', 100, y); y += 16;
+    const days = C.simulate(r, state.seed || 7, 8);
+    const bx = 190;
+    g.font = 'bold 19px ' + FF;
+    const tailW = Math.max.apply(null, days.map((ps) => g.measureText(C.fmt(Math.max.apply(null, ps), 0) + ' ' + trimU(u)).width));
+    const bw = 980 - bx - tailW - 16;
+    days.forEach((pieces, d) => {
+      g.fillStyle = '#7a7168'; g.font = '19px ' + FF; g.fillText('第 ' + (d + 1) + ' 天', 100, y + 24);
+      let x = bx;
+      pieces.forEach((p, i) => {
+        if (i > 0 && r.r > 0) { const cw = r.r / r.L * bw; g.fillStyle = '#b9b2a8'; g.fillRect(x, y + 6, cw, 26); x += cw; }
+        const w = p / r.L * bw; g.fillStyle = p >= r.x ? '#e2a55a' : '#e9dfd0'; g.fillRect(x, y + 6, Math.max(0, w - 2), 26); x += w;
+      });
+      g.fillStyle = '#4a443e'; g.font = 'bold 19px ' + FF; g.textAlign = 'right'; g.fillText(C.fmt(Math.max.apply(null, pieces), 0) + ' ' + trimU(u), 980, y + 26); g.textAlign = 'left';
+      y += 38;
+    });
+    y += 30;
+    g.fillStyle = '#2a2724'; g.font = '24px ' + FF;
+    const items = r.facts.concat(C.suggestions(r).filter((s) => s.apply).slice(0, 5).map((s) => '→ ' + s.text));
+    for (const t of items) {
+      const ls = wrap(g, (t.startsWith('→') ? '' : '· ') + t, 860);
+      if (y + ls.length * 36 > 1225) break;
+      ls.forEach((l) => { g.fillText(l, 100, y); y += 36; });
+      y += 8;
+    }
+    g.fillStyle = '#8a8178'; g.font = '20px ' + FF;
+    g.fillText('假设打断位置互相独立、处处等可能；数字是模型结果，不是你真实一天的统计。', 100, 1258);
+    return cv;
+  }
+  function trimU(u) { return u.length > 3 ? u.slice(0, 3) + '…' : u; }
+  function fmtHead(r) { return C.fmt(r.L) + ' ' + r.unit + ' · 打断 ' + r.k + ' 次 · 每次 ' + C.fmt(r.r) + ' ' + r.unit + ' · 想要 ' + C.fmt(r.x) + ' ' + r.unit + ' · 把握 ' + r.conf + '%'; }
+  function backup() {
+    return { app: '一下午都是边角料', version: 1, savedAt: stamp(), input: Object.assign({}, state),
+      result: { summary: last.summary, P: last.P, usable: last.Lp, pieces: last.n, sortedMeans: last.sorted, countLong: last.count, timeLong: last.timeLong, guaranteed: last.guaranteedShow, maxInterrupts: last.maxK, minLength: last.minL, facts: last.facts } };
+  }
+
+  function init() {
+    F.forEach((id) => $(id).addEventListener('input', run));
+    const box = $('presets');
+    PRESETS.forEach((p) => {
+      const b = document.createElement('button'); b.className = 'ghost'; b.textContent = p[0];
+      b.addEventListener('click', () => { Object.assign(state, p[1]); writeInputs(); run(); });
+      box.appendChild(b);
+    });
+    $('reroll').addEventListener('click', () => { state.seed = ((state.seed || 7) * 31 + 17) % 1000003; run(); });
+    $('reset').addEventListener('click', () => { state = Object.assign({}, DEFAULT); writeInputs(); run(); });
+    $('dlCSV').addEventListener('click', () => { if (last) download('一下午都是边角料.csv', new Blob(['\ufeff' + C.toCSV(last, stamp())], { type: 'text/csv;charset=utf-8' })); });
+    $('dlMD').addEventListener('click', () => { if (last) download('一下午都是边角料.md', new Blob([C.toMD(last, stamp())], { type: 'text/markdown;charset=utf-8' })); });
+    $('dlJSON').addEventListener('click', () => { if (last) download('一下午都是边角料-备份.json', new Blob([JSON.stringify(backup(), null, 2)], { type: 'application/json' })); });
+    $('dlPNG').addEventListener('click', () => { if (last) drawPNG(last).toBlob((b) => download('一下午都是边角料-1080x1350.png', b), 'image/png'); });
+    state = load() || Object.assign({}, DEFAULT);
+    writeInputs(); run();
+    window.__as = { last: () => last, state: () => state };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+  </script>
+</body>
+</html>
